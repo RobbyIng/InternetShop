@@ -1,0 +1,57 @@
+import { useNavigate, useParams } from 'react-router-dom'
+import styles from './index.module.css'
+import { fetchCurrentProduct } from '../../api/products'
+import { useQuery } from '@tanstack/react-query'
+import { useSelector } from 'react-redux'
+import { FavorButton } from '../../components/FavorButton'
+
+export const CurrentProduct = () => {
+  const { idOfProduct } = useParams()
+
+  const navigate = useNavigate()
+
+  const { token } = useSelector((state) => state.user)
+
+  const {
+    data: prodCurrentItem,
+    isLoading,
+    isError,
+    error,
+  } = useQuery({
+    queryKey: ['getCurrentProduct'],
+    queryFn: () => {
+      const responce = fetchCurrentProduct(token, idOfProduct)
+      return responce
+    },
+  })
+  if (isLoading) return <p>Идет загрузка...</p>
+  if (isError) return <p>Произошла ошибка: {error}</p>
+  if (prodCurrentItem.err)
+    return <p>Произошла ошибка: {prodCurrentItem.message}</p>
+  if (prodCurrentItem)
+    return (
+      <div className={styles.cardProduct}>
+        <h3 className={styles.userDataForm}>Подробная информация о продукте</h3>
+        <img
+          src={prodCurrentItem.pictures}
+          className={styles.imgCurrent}
+          alt="Изображение корма для собак"
+        />
+        <div className={styles.cardBody}>
+          <p className={styles.cardTitle}>Цена: {prodCurrentItem.price}</p>
+          <p className={styles.cardAmount}>{prodCurrentItem.stock} шт</p>
+          <p className={styles.pcardBody}>{prodCurrentItem.name}</p>
+        </div>
+        <div className={styles.favorButtonContainer}>
+          <FavorButton productItem={prodCurrentItem} />
+        </div>
+        <button
+          className={styles.btnBin}
+          type="button"
+          onClick={() => navigate('/products')}
+        >
+          Назад
+        </button>
+      </div>
+    )
+}
